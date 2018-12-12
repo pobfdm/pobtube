@@ -1,4 +1,4 @@
-(screenshot/pobtube.png)
+![pobtube](screenshots/pobtube.png)
 
 # Pobtube
 Potube is a simple gui for youtube-dl .
@@ -6,3 +6,4 @@ Potube is a simple gui for youtube-dl .
 ## Download
 
 [**Gnu/Linux, Windows, Python Source**](http://www.freemedialab.org/listing/pobtube/)
+
