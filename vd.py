@@ -30,9 +30,19 @@ class MainWindow (Gtk.Builder):
 	destFolder=None
 	tdwn=None
 	outFilename=None
+	username=None
+	password=None
+	btShowOptions=None
+	btSetOptions=None
 	
 	#AboutDialog
 	aboutDialog=None
+	
+	#winOptions
+	winOptions=None
+	entryUsername=None
+	entryPassword=None
+	
 	
 	
 	def my_hook(d):
@@ -74,10 +84,20 @@ class MainWindow (Gtk.Builder):
 		output_template=os.path.join(MainWindow.destFolder,filetmpl)
 		
 		if (MainWindow.OnlyAudio==False):
-			ydl_opts = {'logger': ytLogger(),'nocheckcertificate': True,'nooverwrites': True , 'outtmpl': output_template , 'progress_hooks': [MainWindow.my_hook]}
+			ydl_opts = {
+					'logger': ytLogger(),
+					'username': MainWindow.username,
+					'password': MainWindow.password,
+					'nocheckcertificate': True,
+					'nooverwrites': True ,
+					'outtmpl': output_template ,
+					'progress_hooks': [MainWindow.my_hook],
+					}
 		else:
 			ydl_opts = {
 					'logger': ytLogger(),
+					'username': MainWindow.username,
+					'password': MainWindow.password,
 					'nocheckcertificate': True ,
 					'nooverwrites': True ,
 					'outtmpl': output_template ,
@@ -87,6 +107,10 @@ class MainWindow (Gtk.Builder):
 					'noplaylist' : True,        
 					'progress_hooks': [MainWindow.my_hook],  
 				}
+				
+		if (not MainWindow.username and not MainWindow.password):
+			del ydl_opts['username']
+			del ydl_opts['password']			
 		
 		with youtube_dl.YoutubeDL(ydl_opts) as ydl:
 			ydl.download([url])
@@ -122,10 +146,11 @@ class MainWindow (Gtk.Builder):
 			MainWindow.setWindowSensitive(True)
 			return	
 		
-		if(total>0 and downloaded>0):
-			MainWindow.status.set_text(msg)
-			fraction=downloaded/total
-			MainWindow.progressBar.set_fraction(fraction)	
+		if (type(total) is int and type(downloaded) is int):
+			if(total>0 and downloaded>0):
+				MainWindow.status.set_text(msg)
+				fraction=downloaded/total
+				MainWindow.progressBar.set_fraction(fraction)	
 	
 	def pulsateBar(msg):		
 		MainWindow.progressBar.pulse()
@@ -184,6 +209,14 @@ class MainWindow (Gtk.Builder):
 	
 	def hide_about_dialog(self,dialog):
 		dialog.hide()	
+	
+	def show_options(self):
+		MainWindow.winOptions.show()	
+	
+	def set_options(self):
+		MainWindow.username=MainWindow.entryUsername.get_text()
+		MainWindow.password=MainWindow.entryPassword.get_text()
+		MainWindow.winOptions.hide()
  
 	def __init__(self):
 		self = Gtk.Builder()
@@ -213,10 +246,20 @@ class MainWindow (Gtk.Builder):
 		folderChoser=self.get_object("folderChoser")
 		mainLabel=self.get_object("mainLabel")
 		mainLabel.set_text(_("Paste the link to the video here:"))
+		MainWindow.btShowOptions=self.get_object("btShowOptions")
+		
 		#About Dialog
 		MainWindow.aboutDialog=self.get_object("aboutDialog")
 		btCloseAboutDialog=self.get_object("btCloseAboutDialog")
 		btCloseAboutDialog.connect("clicked", MainWindow.hide_about_dialog, MainWindow.aboutDialog )
+		
+		#winOptions
+		MainWindow.winOptions=self.get_object("winOptions")
+		MainWindow.winOptions.set_title("Pobtube")
+		MainWindow.winOptions.set_icon_from_file("icons/play.png")
+		MainWindow.btSetOptions=self.get_object("btSetOptions")
+		MainWindow.entryUsername=self.get_object("entryUsername")
+		MainWindow.entryPassword=self.get_object("entryPassword")
 		
 		#menu
 		mnuQuit= self.get_object("mnuQuit")
@@ -235,6 +278,8 @@ class MainWindow (Gtk.Builder):
 		MainWindow.btAbort.connect("clicked", MainWindow.on_abort_clicked)
 		MainWindow.chkOnlyAudio.connect("toggled",MainWindow.on_toggled_chkOnlyAudio)
 		folderChoser.connect("file-set",MainWindow.folderSet,folderChoser )
+		MainWindow.btShowOptions.connect("clicked", MainWindow.show_options)
+		MainWindow.btSetOptions.connect("clicked",MainWindow.set_options)
 		
 		
 #Gettext
