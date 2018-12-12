@@ -1,0 +1,55 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2018-12-11 10:41+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <pobfdm@gmail.com>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ASCII\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: vd.py:243
+msgid "Loading, please wait..."
+msgstr "Caricamento in corso..."
+
+msgid "Paste the link to the video here:"
+msgstr "Incolla qui il collegamento al video:"
+
+msgid "only audio"
+msgstr "solo audio"
+
+msgid "Download a video from the web"
+msgstr "Scarica un video dal web"
+
+msgid "Download started..."
+msgstr "Scaricamento iniziato..."
+
+msgid "Done."
+msgstr "Finito."
+
+msgid "Something went wrong with the encoding of the file: "
+msgstr "Qualcosa e' andato storto nella codifica del file: "
+
+msgid "Saving in progress ..."
+msgstr "Salvataggio in corso..."
+
+msgid "I code the audio file..."
+msgstr "Codifico il file audio..."
+
+msgid "Download finished"
+msgstr "Scaricamento terminato"
+
+msgid "Downloading"
+msgstr "Scaricamento in corso"
+
+msgid "Download in progress "
+msgstr "Scaricamento in corso di "
