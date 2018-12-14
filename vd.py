@@ -37,6 +37,7 @@ class MainWindow (Gtk.Builder):
 	btSetOptions=None
 	btOpenFileUrls=None
 	fileUrls=None
+	url=[]
 	
 	#AboutDialog
 	aboutDialog=None
@@ -68,7 +69,7 @@ class MainWindow (Gtk.Builder):
 		
 		
 	
-	def download(self,url):
+	def download(self):
 		
 		class ytLogger(object):
 			def debug(self, msg):
@@ -115,31 +116,65 @@ class MainWindow (Gtk.Builder):
 			del ydl_opts['username']
 			del ydl_opts['password']			
 		
-		with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-			ydl.download([url])
+		if (len(MainWindow.url)==1):
+			with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+				ydl.download([MainWindow.url[0]])
+				
+				#Only Audio
+				if (MainWindow.OnlyAudio==True):
+					GLib.idle_add(MainWindow.updateStatus, _("Saving in progress..."),100,100)
+					GLib.idle_add(MainWindow.status.set_text,_("I code the audio file..."))
+					
+					if (sys.platform == "win32"):
+						ffmpeg="ffmpeg.exe"	
+					else:
+						ffmpeg = shutil.which("ffmpeg")
+								
+					if (ffmpeg!=None):
+						#ffmpeg -i input.mp4 -vn -ab 128k outputfile.mp3
+						try:
+							cmd=ffmpeg+" -y -i \""+MainWindow.outFilename+"\" -vn -ab 128k \""+os.path.splitext(MainWindow.outFilename)[0]+".mp3\""
+							print("Cmd: %s" % cmd)
+							os.system(cmd)
+							os.remove(MainWindow.outFilename)
+						except subprocess.CalledProcessError as e:
+							print (e.output)
+							GLib.idle_add(MainWindow.updateStatus, _("Something went wrong with the encoding of the file: ")+e.output,100,100)
+				#END Only Audio			
+		else:
+			for u in MainWindow.url :
+				with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+					ydl.download([u])		
+				#Only Audio
+				if (MainWindow.OnlyAudio==True):
+					GLib.idle_add(MainWindow.updateStatus, _("Saving in progress..."),100,100)
+					GLib.idle_add(MainWindow.status.set_text,_("I code the audio file..."))
+					
+					if (sys.platform == "win32"):
+						ffmpeg="ffmpeg.exe"	
+					else:
+						ffmpeg = shutil.which("ffmpeg")
+								
+					if (ffmpeg!=None):
+						#ffmpeg -i input.mp4 -vn -ab 128k outputfile.mp3
+						try:
+							cmd=ffmpeg+" -y -i \""+MainWindow.outFilename+"\" -vn -ab 128k \""+os.path.splitext(MainWindow.outFilename)[0]+".mp3\""
+							print("Cmd: %s" % cmd)
+							os.system(cmd)
+							os.remove(MainWindow.outFilename)
+						except subprocess.CalledProcessError as e:
+							print (e.output)
+							GLib.idle_add(MainWindow.updateStatus, _("Something went wrong with the encoding of the file: ")+e.output,100,100)
+				#END Only Audio	
+		
 			
-		if (MainWindow.OnlyAudio==True):
-			GLib.idle_add(MainWindow.updateStatus, _("Saving in progress..."),100,100)
-			GLib.idle_add(MainWindow.status.set_text,_("I code the audio file..."))
-			
-			if (sys.platform == "win32"):
-				ffmpeg="ffmpeg.exe"	
-			else:
-				ffmpeg = shutil.which("ffmpeg")
-						
-			if (ffmpeg!=None):
-				#ffmpeg -i input.mp4 -vn -ab 128k outputfile.mp3
-				try:
-					cmd=ffmpeg+" -y -i \""+MainWindow.outFilename+"\" -vn -ab 128k \""+os.path.splitext(MainWindow.outFilename)[0]+".mp3\""
-					print("Cmd: %s" % cmd)
-					os.system(cmd)
-					os.remove(MainWindow.outFilename)
-				except subprocess.CalledProcessError as e:
-					print (e.output)
-					GLib.idle_add(MainWindow.updateStatus, _("Something went wrong with the encoding of the file: ")+e.output,100,100)	
-			
+		
+		#End all jobs	
 		GLib.idle_add(MainWindow.updateStatus, _("Done."),100,100)
 		GLib.idle_add(MainWindow.setWindowSensitive,True)
+		
+		#Clear structures
+		MainWindow.url.clear()
 	
 	
 	def updateStatus(msg,downloaded,total):
@@ -180,8 +215,9 @@ class MainWindow (Gtk.Builder):
 		MainWindow.status.set_text(_("Download started..."))
 		GLib.idle_add(MainWindow.setWindowSensitive,False)
 		
-		url=entryUrl.get_text()
-		MainWindow.tdwn = threading.Thread(target=MainWindow.download, args=(self,url,))
+		MainWindow.url.append(entryUrl.get_text())
+		
+		MainWindow.tdwn = threading.Thread(target=MainWindow.download, args=(self,))
 		MainWindow.tdwn.daemon = True
 		MainWindow.tdwn.start()
 	
@@ -236,6 +272,8 @@ class MainWindow (Gtk.Builder):
 		if response == Gtk.ResponseType.OK:
 			print("Open clicked")
 			fileUrls=dialog.get_filename()
+			fo = open(fileUrls, "r+")
+			MainWindow.url=fo.readlines()
 			print("File selected: " + fileUrls)
 			MainWindow.entryUrl.set_sensitive(False)
 		elif response == Gtk.ResponseType.CANCEL:
