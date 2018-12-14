@@ -12,8 +12,9 @@ import gi
 gi.require_version('Gtk', '3.0') 
 from gi.repository import GLib, Gtk, GObject
 
-import os,sys, signal, shutil, subprocess
+import os,sys, shutil, subprocess
 import gettext,locale
+
 
 
 class MainWindow (Gtk.Builder):
@@ -34,6 +35,8 @@ class MainWindow (Gtk.Builder):
 	password=None
 	btShowOptions=None
 	btSetOptions=None
+	btOpenFileUrls=None
+	fileUrls=None
 	
 	#AboutDialog
 	aboutDialog=None
@@ -217,6 +220,32 @@ class MainWindow (Gtk.Builder):
 		MainWindow.username=MainWindow.entryUsername.get_text()
 		MainWindow.password=MainWindow.entryPassword.get_text()
 		MainWindow.winOptions.hide()
+	
+	def loadUrlsFromFile(self):
+		dialog = Gtk.FileChooserDialog(_("Please choose a file with a list of urls"), MainWindow.win,
+            Gtk.FileChooserAction.OPEN,
+            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+             Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
+		
+		filter_text = Gtk.FileFilter()
+		filter_text.set_name("Text files")
+		filter_text.add_mime_type("text/plain")
+		dialog.add_filter(filter_text)
+
+		response = dialog.run()
+		if response == Gtk.ResponseType.OK:
+			print("Open clicked")
+			fileUrls=dialog.get_filename()
+			print("File selected: " + fileUrls)
+			MainWindow.entryUrl.set_sensitive(False)
+		elif response == Gtk.ResponseType.CANCEL:
+			print("Cancel clicked")
+			MainWindow.entryUrl.set_sensitive(True)
+			fileUrls=None
+		dialog.destroy()
+
+	
+		
  
 	def __init__(self):
 		self = Gtk.Builder()
@@ -247,6 +276,7 @@ class MainWindow (Gtk.Builder):
 		mainLabel=self.get_object("mainLabel")
 		mainLabel.set_text(_("Paste the link to the video here:"))
 		MainWindow.btShowOptions=self.get_object("btShowOptions")
+		MainWindow.btOpenFileUrls=self.get_object("btOpenFileUrls")
 		
 		#About Dialog
 		MainWindow.aboutDialog=self.get_object("aboutDialog")
@@ -280,6 +310,7 @@ class MainWindow (Gtk.Builder):
 		folderChoser.connect("file-set",MainWindow.folderSet,folderChoser )
 		MainWindow.btShowOptions.connect("clicked", MainWindow.show_options)
 		MainWindow.btSetOptions.connect("clicked",MainWindow.set_options)
+		MainWindow.btOpenFileUrls.connect("clicked",MainWindow.loadUrlsFromFile)
 		
 		
 #Gettext
