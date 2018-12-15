@@ -19,23 +19,26 @@ import gettext,locale
 
 class MainWindow (Gtk.Builder):
 	
+	#Widget in win
 	win=None
 	status=None
 	progressBar=None
 	entryUrl=None
 	btDownload=None
 	btAbort=None
-	Continue=True
 	chkOnlyAudio=None
+	lblGlobalCounter=None
+	btSetOptions=None
+	btOpenFileUrls=None
+	btClearUrls=None
+	
+	Continue=True
 	OnlyAudio=False
 	destFolder=None
 	tdwn=None
 	outFilename=None
 	username=None
 	password=None
-	btShowOptions=None
-	btSetOptions=None
-	btOpenFileUrls=None
 	fileUrls=None
 	url=[]
 	
@@ -116,7 +119,11 @@ class MainWindow (Gtk.Builder):
 			del ydl_opts['username']
 			del ydl_opts['password']			
 		
+		#Download 1 url
+		GLib.idle_add(MainWindow.setWindowSensitive,False)
+		
 		if (len(MainWindow.url)==1):
+			GLib.idle_add(MainWindow.lblGlobalCounter.set_label, "1/1")
 			with youtube_dl.YoutubeDL(ydl_opts) as ydl:
 				ydl.download([MainWindow.url[0]])
 				
@@ -141,8 +148,11 @@ class MainWindow (Gtk.Builder):
 							print (e.output)
 							GLib.idle_add(MainWindow.updateStatus, _("Something went wrong with the encoding of the file: ")+e.output,100,100)
 				#END Only Audio			
-		else:
+		else: #download more then 1 url from file
+			currU=0
 			for u in MainWindow.url :
+				currU+=1
+				GLib.idle_add(MainWindow.lblGlobalCounter.set_label, str(currU)+"/"+str(len(MainWindow.url)))
 				with youtube_dl.YoutubeDL(ydl_opts) as ydl:
 					ydl.download([u])		
 				#Only Audio
@@ -181,7 +191,6 @@ class MainWindow (Gtk.Builder):
 		if (downloaded=="Err"): 
 			MainWindow.progressBar.set_fraction(0.0)
 			MainWindow.status.set_text(msg)
-			MainWindow.setWindowSensitive(True)
 			return	
 		
 		if (type(total) is int and type(downloaded) is int):
@@ -201,11 +210,13 @@ class MainWindow (Gtk.Builder):
 			MainWindow.entryUrl.set_sensitive(True)
 			MainWindow.btDownload.set_sensitive(True)
 			MainWindow.chkOnlyAudio.set_sensitive(True)
+			MainWindow.btClearUrls.set_sensitive(True)
 			MainWindow.btAbort.set_sensitive(False)
 		else:
 			MainWindow.entryUrl.set_sensitive(False)
 			MainWindow.btDownload.set_sensitive(False)
 			MainWindow.chkOnlyAudio.set_sensitive(False)
+			MainWindow.btClearUrls.set_sensitive(False)
 			MainWindow.btAbort.set_sensitive(True)
 	
 	def on_button_clicked(self,entryUrl):
@@ -215,7 +226,8 @@ class MainWindow (Gtk.Builder):
 		MainWindow.status.set_text(_("Download started..."))
 		GLib.idle_add(MainWindow.setWindowSensitive,False)
 		
-		MainWindow.url.append(entryUrl.get_text())
+		if (len(MainWindow.entryUrl.get_text())>4):
+			 MainWindow.url.append(entryUrl.get_text())
 		
 		MainWindow.tdwn = threading.Thread(target=MainWindow.download, args=(self,))
 		MainWindow.tdwn.daemon = True
@@ -276,13 +288,21 @@ class MainWindow (Gtk.Builder):
 			MainWindow.url=fo.readlines()
 			print("File selected: " + fileUrls)
 			MainWindow.entryUrl.set_sensitive(False)
+			MainWindow.entryUrl.set_text("")
+			MainWindow.lblGlobalCounter.set_label(str(len(MainWindow.url))+" urls")
 		elif response == Gtk.ResponseType.CANCEL:
 			print("Cancel clicked")
 			MainWindow.entryUrl.set_sensitive(True)
 			fileUrls=None
+			MainWindow.url.clear()
 		dialog.destroy()
 
 	
+	def clearUrls(self):
+		MainWindow.url.clear()
+		MainWindow.entryUrl.set_text("")
+		MainWindow.entryUrl.set_sensitive(True)
+		MainWindow.lblGlobalCounter.set_label(str(len(MainWindow.url))+" urls")
 		
  
 	def __init__(self):
@@ -303,6 +323,7 @@ class MainWindow (Gtk.Builder):
 		MainWindow.win.set_icon_from_file("icons/play.png")
 		MainWindow.win.set_title(_("Download a video from the web"))
 		MainWindow.entryUrl = self.get_object("entryUrl")
+		MainWindow.btClearUrls=self.get_object("btClearUrls")
 		MainWindow.chkOnlyAudio = self.get_object("chkOnlyAudio")
 		MainWindow.chkOnlyAudio.set_label(_("only audio"))
 		MainWindow.btDownload = self.get_object("btDownload")
@@ -313,8 +334,12 @@ class MainWindow (Gtk.Builder):
 		folderChoser=self.get_object("folderChoser")
 		mainLabel=self.get_object("mainLabel")
 		mainLabel.set_text(_("Paste the link to the video here:"))
-		MainWindow.btShowOptions=self.get_object("btShowOptions")
 		MainWindow.btOpenFileUrls=self.get_object("btOpenFileUrls")
+		MainWindow.lblGlobalCounter=self.get_object("lblGlobalCounter")
+		
+		#select all text in entryUrl
+		MainWindow.entryUrl.select_region(0,2000)
+		MainWindow.entryUrl.set_tooltip_text(_("Insert here your url"))
 		
 		#About Dialog
 		MainWindow.aboutDialog=self.get_object("aboutDialog")
@@ -330,6 +355,9 @@ class MainWindow (Gtk.Builder):
 		MainWindow.entryPassword=self.get_object("entryPassword")
 		
 		#menu
+		mnuPref=self.get_object("mnuPref")
+		mnuPref.connect("activate",MainWindow.show_options)
+		
 		mnuQuit= self.get_object("mnuQuit")
 		mnuAboutDialog= self.get_object("mnuAboutDialog")
 		mnuAboutDialog.connect("activate",MainWindow.show_about_dialog, MainWindow.aboutDialog)
@@ -346,9 +374,9 @@ class MainWindow (Gtk.Builder):
 		MainWindow.btAbort.connect("clicked", MainWindow.on_abort_clicked)
 		MainWindow.chkOnlyAudio.connect("toggled",MainWindow.on_toggled_chkOnlyAudio)
 		folderChoser.connect("file-set",MainWindow.folderSet,folderChoser )
-		MainWindow.btShowOptions.connect("clicked", MainWindow.show_options)
 		MainWindow.btSetOptions.connect("clicked",MainWindow.set_options)
 		MainWindow.btOpenFileUrls.connect("clicked",MainWindow.loadUrlsFromFile)
+		MainWindow.btClearUrls.connect("clicked", MainWindow.clearUrls)
 		
 		
 #Gettext

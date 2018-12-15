@@ -53,3 +53,6 @@ msgstr "Scaricamento in corso"
 
 msgid "Download in progress "
 msgstr "Scaricamento in corso di "
+
+msgid "Insert here your url"
+msgstr "Inserisci qui il tuo url"
