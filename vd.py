@@ -85,6 +85,7 @@ class MainWindow (Gtk.Builder):
 			def error(self, msg):
 				print(msg)
 				GLib.idle_add(MainWindow.updateStatus, msg,"Err","Err")
+				MainWindow.setWindowSensitive(True)
 		
 				
 		filetmpl="%(title)s.%(ext)s"
@@ -125,58 +126,69 @@ class MainWindow (Gtk.Builder):
 		if (len(MainWindow.url)==1):
 			GLib.idle_add(MainWindow.lblGlobalCounter.set_label, "1/1")
 			with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-				ydl.download([MainWindow.url[0]])
-				
-				#Only Audio
-				if (MainWindow.OnlyAudio==True):
-					GLib.idle_add(MainWindow.updateStatus, _("Saving in progress..."),100,100)
-					GLib.idle_add(MainWindow.status.set_text,_("I code the audio file..."))
+				try:
+					ydl.download([MainWindow.url[0]])
+						
+					#Only Audio
+					if (MainWindow.OnlyAudio==True):
+						GLib.idle_add(MainWindow.updateStatus, _("Saving in progress..."),100,100)
+						GLib.idle_add(MainWindow.status.set_text,_("I code the audio file..."))
+						
+						if (sys.platform == "win32"):
+							ffmpeg="ffmpeg.exe"	
+						else:
+							ffmpeg = shutil.which("ffmpeg")
+									
+						if (ffmpeg!=None):
+							#ffmpeg -i input.mp4 -vn -ab 128k outputfile.mp3
+							try:
+								cmd=ffmpeg+" -y -i \""+MainWindow.outFilename+"\" -vn -ab 128k \""+os.path.splitext(MainWindow.outFilename)[0]+".mp3\""
+								print("Cmd: %s" % cmd)
+								os.system(cmd)
+								os.remove(MainWindow.outFilename)
+							except subprocess.CalledProcessError as e:
+								print (e.output)
+								GLib.idle_add(MainWindow.updateStatus, _("Something went wrong with the encoding of the file: ")+e.output,100,100)
+					#END Only Audio	
+				except :
+					GLib.idle_add(MainWindow.updateStatus, _("Download error!"),"Err","Err")
+					GLib.idle_add(MainWindow.setWindowSensitive,True)
+					MainWindow.url.clear()
+					return
 					
-					if (sys.platform == "win32"):
-						ffmpeg="ffmpeg.exe"	
-					else:
-						ffmpeg = shutil.which("ffmpeg")
 								
-					if (ffmpeg!=None):
-						#ffmpeg -i input.mp4 -vn -ab 128k outputfile.mp3
-						try:
-							cmd=ffmpeg+" -y -i \""+MainWindow.outFilename+"\" -vn -ab 128k \""+os.path.splitext(MainWindow.outFilename)[0]+".mp3\""
-							print("Cmd: %s" % cmd)
-							os.system(cmd)
-							os.remove(MainWindow.outFilename)
-						except subprocess.CalledProcessError as e:
-							print (e.output)
-							GLib.idle_add(MainWindow.updateStatus, _("Something went wrong with the encoding of the file: ")+e.output,100,100)
-				#END Only Audio			
 		else: #download more then 1 url from file
 			currU=0
 			for u in MainWindow.url :
 				currU+=1
 				GLib.idle_add(MainWindow.lblGlobalCounter.set_label, str(currU)+"/"+str(len(MainWindow.url)))
-				with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-					ydl.download([u])		
-				#Only Audio
-				if (MainWindow.OnlyAudio==True):
-					GLib.idle_add(MainWindow.updateStatus, _("Saving in progress..."),100,100)
-					GLib.idle_add(MainWindow.status.set_text,_("I code the audio file..."))
-					
-					if (sys.platform == "win32"):
-						ffmpeg="ffmpeg.exe"	
-					else:
-						ffmpeg = shutil.which("ffmpeg")
-								
-					if (ffmpeg!=None):
-						#ffmpeg -i input.mp4 -vn -ab 128k outputfile.mp3
-						try:
-							cmd=ffmpeg+" -y -i \""+MainWindow.outFilename+"\" -vn -ab 128k \""+os.path.splitext(MainWindow.outFilename)[0]+".mp3\""
-							print("Cmd: %s" % cmd)
-							os.system(cmd)
-							os.remove(MainWindow.outFilename)
-						except subprocess.CalledProcessError as e:
-							print (e.output)
-							GLib.idle_add(MainWindow.updateStatus, _("Something went wrong with the encoding of the file: ")+e.output,100,100)
-				#END Only Audio	
-		
+				try:
+					with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+						ydl.download([u])		
+					#Only Audio
+					if (MainWindow.OnlyAudio==True):
+						GLib.idle_add(MainWindow.updateStatus, _("Saving in progress..."),100,100)
+						GLib.idle_add(MainWindow.status.set_text,_("I code the audio file..."))
+						
+						if (sys.platform == "win32"):
+							ffmpeg="ffmpeg.exe"	
+						else:
+							ffmpeg = shutil.which("ffmpeg")
+									
+						if (ffmpeg!=None):
+							#ffmpeg -i input.mp4 -vn -ab 128k outputfile.mp3
+							try:
+								cmd=ffmpeg+" -y -i \""+MainWindow.outFilename+"\" -vn -ab 128k \""+os.path.splitext(MainWindow.outFilename)[0]+".mp3\""
+								print("Cmd: %s" % cmd)
+								os.system(cmd)
+								os.remove(MainWindow.outFilename)
+							except subprocess.CalledProcessError as e:
+								print (e.output)
+								GLib.idle_add(MainWindow.updateStatus, _("Something went wrong with the encoding of the file: ")+e.output,100,100)
+					#END Only Audio	
+				except:
+					GLib.idle_add(MainWindow.updateStatus, _("Download error!"),"Err","Err")
+				
 			
 		
 		#End all jobs	
@@ -303,7 +315,8 @@ class MainWindow (Gtk.Builder):
 		MainWindow.entryUrl.set_text("")
 		MainWindow.entryUrl.set_sensitive(True)
 		MainWindow.lblGlobalCounter.set_label(str(len(MainWindow.url))+" urls")
-		
+	
+	
  
 	def __init__(self):
 		self = Gtk.Builder()
