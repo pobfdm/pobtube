@@ -3,7 +3,7 @@
 import os
 
 if (not os.path.isfile("vd.py") ):
-	os.chdir("../lib/pobtube/")
+	os.chdir("/usr/lib/pobtube/")
 	os.system("python3 vd.py")
 else:
 	os.system("python3 vd.py")
