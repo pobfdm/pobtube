@@ -1,0 +1,44 @@
+# Maintainer: Fabio Di Matteo <pobfdm@gmail.com>
+pkgname=pobtube
+pkgver=0.1
+pkgrel=1
+epoch=
+pkgdesc="Pobtube is a simple gui for youtube-dl."
+arch=('any')
+url="https://github.com/pobfdm/pobtube"
+license=('GPL')
+groups=('Network')
+depends=('python-gobject' 'gtk3' 'youtube-dl' 'ffmpeg')
+makedepends=('')
+checkdepends=()
+#optdepends=('')
+provides=('pobtube')
+conflicts=('pobtube')
+replaces=()
+backup=()
+#options=( '')
+install=
+changelog=
+#source=($pkgname-$pkgver.tar.gz)
+noextract=()
+source=(https://github.com/pobfdm/pobtube/archive/master.zip)
+md5sums=('SKIP') #generate with 'makepkg -g'
+
+
+build() {
+  echo "Nothing to build..."
+  
+}
+
+
+package() {
+  mkdir -p "$pkgdir/usr/bin/"
+  mkdir -p "$pkgdir/usr/lib/pobtube/"
+  mkdir -p "$pkgdir/usr/share/applications"
+  cp "$srcdir/pobtube-master/pobtube" "$pkgdir/usr/bin/"
+  cp  "$srcdir/pobtube-master/vd.py" "$pkgdir/usr/lib/pobtube/"
+  cp  "$srcdir/pobtube-master/builder.ui" "$pkgdir/usr/lib/pobtube/"
+  cp  "$srcdir/pobtube-master/pobtube.desktop" "$pkgdir/usr/share/applications"
+  cp -R "$srcdir/pobtube-master/icons/" "$pkgdir/usr/lib/pobtube/"
+  cp -R "$srcdir/pobtube-master/languages/" "$pkgdir/usr/lib/pobtube/"
+}
