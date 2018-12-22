@@ -1,0 +1,10 @@
+[Desktop Entry] 
+Type=Application
+Name=Pobtube
+GenericName=Pobtube 
+Comment=A simple gui to youtube-dl!
+Exec=pobvnc
+Icon=/usr/lib/pobtube/icons/play.png
+Terminal=FALSE
+StartupNotify=TRUE
+Categories=Network;Utility;
